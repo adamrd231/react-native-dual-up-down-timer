@@ -1,12 +1,65 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { UseState } from 'react';
+import React, { useEffect, UseState } from 'react';
 import { StyleSheet, Text, View, Button } from 'react-native';
 import UIStepper from 'react-native-ui-stepper';
 
+
+// function startIntervalTimer() {
+//     setInterval(() => {
+//         console.log('This will run every second!');
+//       }, 1000);
+// }
+
 export default function Home() {
 
-    const [ heat, SetHeat ] = React.useState(45);
-    const [ cool, SetCool ] = React.useState(45);
+    const [ heat, SetHeat ] = React.useState(5);
+    const [ cool, SetCool ] = React.useState(5);
+    const [ timerIsActive, SetTimerIsActive ] = React.useState(false);
+
+    const [ buttonTitle, SetButtonTitle] = React.useState();
+
+    const [ heatReset, SetHeatReset ] = React.useState(heat);
+    const [ coolReset, SetCoolReset ] = React.useState(heat);
+
+    function toggle() {
+        // Set Timer to true
+        SetTimerIsActive(!timerIsActive);
+    }
+
+
+    useEffect(() => {
+        if (timerIsActive) {
+            SetButtonTitle("RESET")
+        } else {
+            SetButtonTitle("START")
+        }
+    },[buttonTitle, timerIsActive]);
+
+
+    useEffect(() => {
+        let interval = null;
+        
+        if (timerIsActive && heat > 0) {
+            interval = setInterval(() => {
+                SetHeat(heat => heat - 1)
+              }, 1000);
+
+        } else if (timerIsActive && cool > 0) {
+            clearInterval(interval);
+            interval = setInterval(() => {
+                SetCool(cool => cool - 1)
+              }, 1000);
+
+        } else {
+            SetTimerIsActive(timer => false)
+            clearInterval(interval);
+            SetHeat(heatReset);
+            SetCool(coolReset);  
+        }
+        
+        return () => clearInterval(interval);
+        
+    },[timerIsActive, heat, cool, heatReset]);
 
   return (
 
@@ -17,7 +70,9 @@ export default function Home() {
         <Text>{heat}</Text>
         <UIStepper
             value={heat}
-            onValueChange={ (value) => SetHeat(value) }
+            onValueChange={ 
+                (value) => SetHeat(value), (value) => SetHeatReset(value)
+            }
             steps={5}
             initialValue={heat}
             minimumValue={0}
@@ -30,7 +85,7 @@ export default function Home() {
         <Text>{cool}</Text>
         <UIStepper
             value={cool}
-            onValueChange={ (value) => SetCool(value) }
+            onValueChange={ (value) => SetCool(value), (value) => SetCoolReset(value) }
             steps={5}
             initialValue={cool}
             minimumValue={0}
@@ -40,10 +95,8 @@ export default function Home() {
 
       <View>
         <Button
-          title="Start"
-        />
-        <Button
-          title="Reset"
+          title={buttonTitle}
+          onPress={toggle}
         />
       </View>
       
